@@ -1,0 +1,13 @@
+article[data-testid="tweet"].xvr-host { position: relative; }
+.xvr-badge {
+  position: absolute; right: 44px; top: 6px; z-index: 5;
+  font: 600 11px/1 -apple-system, system-ui, sans-serif;
+  padding: 3px 7px; border-radius: 999px; color: #fff; background: #6b7280;
+  cursor: help; user-select: none;
+}
+.xvr-badge[data-label="hot"] { background: #e0245e; }
+.xvr-badge[data-label="rising"] { background: #f59e0b; }
+.xvr-badge[data-label="normal"] { background: #536471; }
+.xvr-badge[data-label="old"], .xvr-badge[data-label="low-data"] { background: #8899a6; opacity: .7; }
+article[data-testid="tweet"].xvr-hot { box-shadow: inset 3px 0 0 #e0245e; }
+article[data-testid="tweet"].xvr-rising { box-shadow: inset 3px 0 0 #f59e0b; }
