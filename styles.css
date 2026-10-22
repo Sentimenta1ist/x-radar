@@ -11,3 +11,24 @@ article[data-testid="tweet"].xvr-host { position: relative; }
 .xvr-badge[data-label="old"], .xvr-badge[data-label="low-data"] { background: #8899a6; opacity: .7; }
 article[data-testid="tweet"].xvr-hot { box-shadow: inset 3px 0 0 #e0245e; }
 article[data-testid="tweet"].xvr-rising { box-shadow: inset 3px 0 0 #f59e0b; }
+
+body.xvr-dim article[data-testid="tweet"].xvr-host:not(.xvr-hot):not(.xvr-rising) { opacity: .28; }
+body.xvr-dim article[data-testid="tweet"].xvr-host:not(.xvr-hot):not(.xvr-rising):hover { opacity: 1; }
+
+#xvr-panel {
+  position: fixed; right: 16px; bottom: 16px; z-index: 99999; width: 300px; max-height: 60vh; overflow: auto;
+  background: #15202b; color: #e7e9ea; border: 1px solid #38444d; border-radius: 12px;
+  font: 13px/1.35 -apple-system, system-ui, sans-serif; box-shadow: 0 6px 24px rgba(0,0,0,.45);
+}
+#xvr-panel .xvr-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #38444d; position: sticky; top: 0; background: #15202b; }
+#xvr-panel button { font: inherit; font-size: 11px; background: #22303c; color: #e7e9ea; border: 1px solid #38444d; border-radius: 6px; padding: 2px 7px; cursor: pointer; margin-left: 4px; }
+#xvr-panel.xvr-collapsed .xvr-list { display: none; }
+#xvr-panel.xvr-collapsed .xvr-head { border-bottom: 0; }
+#xvr-panel .xvr-row { padding: 8px 10px; border-bottom: 1px solid #22303c; cursor: pointer; }
+#xvr-panel .xvr-row:hover { background: #1c2a38; }
+#xvr-panel .xvr-pill { color: #fff; border-radius: 999px; padding: 1px 7px; font-size: 11px; font-weight: 600; background: #f59e0b; }
+#xvr-panel .xvr-pill[data-label="hot"] { background: #e0245e; }
+#xvr-panel .xvr-who { font-weight: 600; }
+#xvr-panel .xvr-sub { color: #8b98a5; font-size: 11px; }
+#xvr-panel .xvr-txt { margin-top: 2px; color: #cfd9de; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#xvr-panel .xvr-empty { padding: 10px; color: #8b98a5; }

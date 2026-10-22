@@ -141,8 +141,68 @@
     b.title = lines.join('\n');
   }
 
+
+  // ---- on-page panel: best fresh posts seen so far + dim toggle ----
+  let panel = null, listEl = null, dimOn = false, collapsed = false;
+  try { dimOn = localStorage.getItem('xvr_dim') === '1'; collapsed = localStorage.getItem('xvr_collapsed') === '1'; } catch (e) { /* storage blocked */ }
+
+  function buildPanel() {
+    panel = document.createElement('div');
+    panel.id = 'xvr-panel';
+    panel.innerHTML = '<div class="xvr-head"><b>Radar</b><span class="xvr-btns"><button data-a="dim"></button><button data-a="fold">–</button></span></div><div class="xvr-list"></div>';
+    document.body.appendChild(panel);
+    listEl = panel.querySelector('.xvr-list');
+    panel.addEventListener('click', (e) => {
+      const a = e.target.dataset && e.target.dataset.a;
+      if (a === 'dim') { dimOn = !dimOn; try { localStorage.setItem('xvr_dim', dimOn ? '1' : '0'); } catch (x) {} renderPanel(); }
+      if (a === 'fold') { collapsed = !collapsed; try { localStorage.setItem('xvr_collapsed', collapsed ? '1' : '0'); } catch (x) {} renderPanel(); }
+    });
+  }
+
+  function goTo(id, handle) {
+    const link = document.querySelector(`article a[href="/${handle}/status/${id}"]`) || document.querySelector(`article a[href$="/status/${id}"]`);
+    const art = link && link.closest('article');
+    if (art) art.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    else window.open(`https://x.com/${handle}/status/${id}`, '_blank');
+  }
+
+  function renderPanel() {
+    if (!document.body) return;
+    if (!panel) buildPanel();
+    document.body.classList.toggle('xvr-dim', dimOn);
+    panel.classList.toggle('xvr-collapsed', collapsed);
+    panel.querySelector('[data-a="dim"]').textContent = dimOn ? 'show all' : 'dim grey';
+    panel.querySelector('[data-a="fold"]').textContent = collapsed ? '+' : '–';
+    const cutoff = Date.now() - 3 * 3600 * 1000;
+    const rows = Object.entries(tweets)
+      .filter(([, t]) => (t.seen || 0) >= cutoff && (t.label === 'hot' || t.label === 'rising'))
+      .sort((a, b) => b[1].score - a[1].score)
+      .slice(0, 8);
+    listEl.textContent = '';
+    if (!rows.length) {
+      const d = document.createElement('div'); d.className = 'xvr-empty';
+      d.textContent = 'No hot or rising posts yet. Scroll Following / Latest.';
+      listEl.appendChild(d); return;
+    }
+    for (const [id, t] of rows) {
+      const r = document.createElement('div'); r.className = 'xvr-row';
+      const age = Math.round(((t.seen || Date.now()) - t.created) / 60000);
+      const h = document.createElement('div');
+      h.innerHTML = '<span class="xvr-pill"></span> <span class="xvr-who"></span> <span class="xvr-sub"></span>';
+      h.querySelector('.xvr-pill').textContent = (t.label === 'hot' ? '🔥 ' : '↗ ') + t.score;
+      h.querySelector('.xvr-pill').dataset.label = t.label;
+      h.querySelector('.xvr-who').textContent = '@' + t.handle;
+      h.querySelector('.xvr-sub').textContent = `${fmt(t.views)} views · ${age}m`;
+      const x = document.createElement('div'); x.className = 'xvr-txt'; x.textContent = t.text || '';
+      r.appendChild(h); r.appendChild(x);
+      r.addEventListener('click', () => goTo(id, t.handle));
+      listEl.appendChild(r);
+    }
+  }
+
   function scan() {
     document.querySelectorAll('article[data-testid="tweet"]').forEach((a) => { try { process(a); } catch (e) { /* DOM changed, skip */ } });
+    renderPanel();
   }
 
   function prune() {
