@@ -122,7 +122,12 @@
     b.dataset.label = res.label;
     if (res.label === 'low-data') { b.textContent = '·'; b.title = 'Not enough views/age to score yet'; return; }
     const icon = res.label === 'hot' ? '🔥 ' : res.label === 'rising' ? '↗ ' : '';
-    b.textContent = icon + res.score;
+    if (res.label === 'old') {
+      const h = ageMin / 60;
+      b.textContent = (h >= 24 ? Math.round(h / 24) + 'd' : Math.round(h) + 'h') + ' · ' + res.score;
+    } else {
+      b.textContent = icon + res.score;
+    }
     const p = res.parts;
     const lines = [
       `Score ${res.score}/100 (${res.label})`,
