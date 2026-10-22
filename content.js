@@ -230,7 +230,7 @@
     panel.querySelector('[data-a="fold"]').textContent = collapsed ? '+' : '–';
     const cutoff = Date.now() - 3 * 3600 * 1000;
     const rows = Object.entries(tweets)
-      .filter(([, t]) => (t.seen || 0) >= cutoff && (t.label === 'hot' || t.label === 'rising'))
+      .filter(([, t]) => (t.seen || 0) >= cutoff && Date.now() - t.created <= 4 * 3600 * 1000 && (t.label === 'hot' || t.label === 'rising'))
       .sort((a, b) => b[1].score - a[1].score)
       .slice(0, 8);
     panel.querySelector('.xvr-n').textContent = rows.length ? '(' + rows.length + ')' : '';
@@ -242,13 +242,14 @@
     }
     for (const [id, t] of rows) {
       const r = document.createElement('div'); r.className = 'xvr-row';
-      const age = Math.round(((t.seen || Date.now()) - t.created) / 60000);
+      const age = Math.round((Date.now() - t.created) / 60000);
+      const seenAgo = Math.round((Date.now() - (t.seen || Date.now())) / 60000);
       const h = document.createElement('div');
       h.innerHTML = '<span class="xvr-pill"></span> <span class="xvr-who"></span> <span class="xvr-sub"></span>';
       h.querySelector('.xvr-pill').textContent = (t.label === 'hot' ? '🔥 ' : '↗ ') + t.score;
       h.querySelector('.xvr-pill').dataset.label = t.label;
       h.querySelector('.xvr-who').textContent = '@' + t.handle;
-      h.querySelector('.xvr-sub').textContent = `${fmt(t.views)} views · ${age}m`;
+      h.querySelector('.xvr-sub').textContent = `${fmt(t.views)} views · ${age}m old · seen ${seenAgo}m ago`;
       const x = document.createElement('div'); x.className = 'xvr-txt'; x.textContent = t.text || '';
       r.appendChild(h); r.appendChild(x);
       r.addEventListener('click', () => goTo(id, t.handle));
