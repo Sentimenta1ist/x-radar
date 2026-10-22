@@ -255,7 +255,19 @@
     }
   }
 
+  // After the extension is reloaded/updated, this orphaned copy loses chrome.* access. Stop quietly instead of throwing every tick.
+  let observer = null, intervals = [];
+  function alive() { try { return !!chrome.runtime.id; } catch (e) { return false; } }
+  function shutdown() {
+    intervals.forEach(clearInterval); intervals = [];
+    clearTimeout(timer);
+    if (observer) observer.disconnect();
+    document.querySelectorAll('.xvr-wrap, .xvr-badge, #xvr-panel').forEach((el) => el.remove());
+    document.body.classList.remove('xvr-dim');
+  }
+
   function scan() {
+    if (!alive()) { shutdown(); return; }
     document.querySelectorAll('article[data-testid="tweet"]').forEach((a) => { try { process(a); } catch (e) { /* DOM changed, skip */ } });
     renderPanel();
   }
@@ -272,6 +284,7 @@
   }
 
   function flush() {
+    if (!alive()) { shutdown(); return; }
     if (!dirty) return;
     dirty = false;
     prune();
@@ -287,9 +300,10 @@
     authors = d.xvr_authors || {};
     cfg = d.xvr_settings || {};
     scan();
-    new MutationObserver(debounced).observe(document.body, { childList: true, subtree: true });
-    setInterval(scan, SCAN_MS);   // re-read counters of tweets that stay on screen
-    setInterval(flush, FLUSH_MS);
+    observer = new MutationObserver(debounced);
+    observer.observe(document.body, { childList: true, subtree: true });
+    intervals.push(setInterval(scan, SCAN_MS));   // re-read counters of tweets that stay on screen
+    intervals.push(setInterval(flush, FLUSH_MS));
   });
 
   chrome.storage.onChanged.addListener((ch) => {
