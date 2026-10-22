@@ -198,13 +198,13 @@
 
 
   // ---- on-page panel: best fresh posts seen so far + dim toggle ----
-  let panel = null, listEl = null, dimOn = false, collapsed = false;
-  try { dimOn = localStorage.getItem('xvr_dim') === '1'; collapsed = localStorage.getItem('xvr_collapsed') === '1'; } catch (e) { /* storage blocked */ }
+  let panel = null, listEl = null, dimOn = false, collapsed = true;
+  try { dimOn = localStorage.getItem('xvr_dim') === '1'; collapsed = localStorage.getItem('xvr_collapsed') !== '0'; } catch (e) { /* storage blocked */ }
 
   function buildPanel() {
     panel = document.createElement('div');
     panel.id = 'xvr-panel';
-    panel.innerHTML = '<div class="xvr-head"><b>Radar</b><span class="xvr-btns"><button data-a="dim"></button><button data-a="fold">–</button></span></div><div class="xvr-list"></div>';
+    panel.innerHTML = '<div class="xvr-head"><b>Radar <span class="xvr-n"></span></b><span class="xvr-btns"><button data-a="dim"></button><button data-a="fold">–</button></span></div><div class="xvr-list"></div>';
     document.body.appendChild(panel);
     listEl = panel.querySelector('.xvr-list');
     panel.addEventListener('click', (e) => {
@@ -233,6 +233,7 @@
       .filter(([, t]) => (t.seen || 0) >= cutoff && (t.label === 'hot' || t.label === 'rising'))
       .sort((a, b) => b[1].score - a[1].score)
       .slice(0, 8);
+    panel.querySelector('.xvr-n').textContent = rows.length ? '(' + rows.length + ')' : '';
     listEl.textContent = '';
     if (!rows.length) {
       const d = document.createElement('div'); d.className = 'xvr-empty';

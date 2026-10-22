@@ -1,12 +1,12 @@
 article[data-testid="tweet"].xvr-host { position: relative; }
-.xvr-wrap { position: absolute; right: 44px; top: 6px; z-index: 5; display: flex; gap: 4px; align-items: center; }
+.xvr-wrap { position: absolute; right: 88px; top: 8px; z-index: 5; display: flex; gap: 6px; align-items: center; height: 22px; }
 .xvr-badge {
   font: 600 11px/1 -apple-system, system-ui, sans-serif;
-  padding: 3px 7px; border-radius: 999px; color: #fff; background: #6b7280;
-  cursor: help; user-select: none;
+  height: 22px; box-sizing: border-box; display: inline-flex; align-items: center; padding: 0 9px; border-radius: 999px; color: #fff; background: #6b7280;
+  cursor: help; user-select: none; white-space: nowrap;
 }
 .xvr-save {
-  font: 13px/1 -apple-system, system-ui, sans-serif; width: 22px; height: 22px; padding: 0;
+  font: 13px/1 -apple-system, system-ui, sans-serif; width: 22px; height: 22px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
   border: 0; border-radius: 999px; background: rgba(83,100,113,.55); color: #fff; cursor: pointer;
 }
 .xvr-save:hover { background: #1d9bf0; }
@@ -22,14 +22,16 @@ body.xvr-dim article[data-testid="tweet"].xvr-host:not(.xvr-hot):not(.xvr-rising
 body.xvr-dim article[data-testid="tweet"].xvr-host:not(.xvr-hot):not(.xvr-rising):hover { opacity: 1; }
 
 #xvr-panel {
-  position: fixed; right: 16px; bottom: 16px; z-index: 99999; width: 300px; max-height: 60vh; overflow: auto;
+  position: fixed; right: 16px; bottom: 16px; z-index: 99999; width: 280px; max-height: 50vh; overflow: auto;
   background: #15202b; color: #e7e9ea; border: 1px solid #38444d; border-radius: 12px;
   font: 13px/1.35 -apple-system, system-ui, sans-serif; box-shadow: 0 6px 24px rgba(0,0,0,.45);
 }
 #xvr-panel .xvr-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #38444d; position: sticky; top: 0; background: #15202b; }
 #xvr-panel button { font: inherit; font-size: 11px; background: #22303c; color: #e7e9ea; border: 1px solid #38444d; border-radius: 6px; padding: 2px 7px; cursor: pointer; margin-left: 4px; }
 #xvr-panel.xvr-collapsed .xvr-list { display: none; }
-#xvr-panel.xvr-collapsed .xvr-head { border-bottom: 0; }
+#xvr-panel.xvr-collapsed { width: auto; }
+#xvr-panel.xvr-collapsed .xvr-head { border-bottom: 0; gap: 10px; }
+#xvr-panel.xvr-collapsed .xvr-btns [data-a="dim"] { display: none; }
 #xvr-panel .xvr-row { padding: 8px 10px; border-bottom: 1px solid #22303c; cursor: pointer; }
 #xvr-panel .xvr-row:hover { background: #1c2a38; }
 #xvr-panel .xvr-pill { color: #fff; border-radius: 999px; padding: 1px 7px; font-size: 11px; font-weight: 600; background: #f59e0b; }
