@@ -12,12 +12,19 @@
   .hot { background: #e0245e; } .rising { background: #f59e0b; } .normal { background: #536471; }
   .meta { color: #536471; font-size: 12px; }
   .txt { margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .saved { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; display: grid; gap: 4px; }
   footer { padding: 8px 12px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; border-top: 1px solid #e5e7eb; }
   button { font: inherit; padding: 4px 8px; }
   input { width: 56px; font: inherit; }
   .empty { padding: 16px 12px; color: #536471; }
 </style>
 <header><h1>X Viral Radar</h1><span class="meta" id="count"></span></header>
+<div class="saved">
+  <div><b>Saved for calibration:</b> <span id="savedInfo">0</span></div>
+  <div class="meta" id="recheckInfo"></div>
+  <button id="recheck">Re-check due posts</button>
+  <button id="savedCsv">Export saved CSV</button>
+</div>
 <div id="list"></div>
 <footer>
   <label>hot ≥ <input id="hot" type="number" min="1" max="100"></label>

@@ -12,6 +12,9 @@
   let tweets = {};   // id -> {handle, snaps: [[t, views, likes, replies, reposts, bookmarks]], created, score, label, projected, text}
   let authors = {};  // handle -> number[] projected finals
   let dirty = false;
+  let saved = {};    // id -> saved record (written only by background.js)
+  const reported = {};
+  const artCtx = new WeakMap();
 
   const store = chrome.storage.local;
 
@@ -73,6 +76,8 @@
   function process(article) {
     const t = readTweet(article);
     if (!t) return;
+    const pageId = (location.pathname.match(/\/status\/(\d+)/) || [])[1];
+    if (pageId && t.id !== pageId) return;   // on a post page, ignore replies under it
     const now = Date.now();
     const ageMin = (now - t.created) / 60000;
     const rec = tweets[t.id] || (tweets[t.id] = { handle: t.handle, created: t.created, snaps: [], text: t.text });
@@ -108,7 +113,45 @@
       rec.counted = true; dirty = true;
     }
 
+    reportIfSaved(t, ageMin);
     paint(article, res, t, ageMin);
+  }
+
+  function reportIfSaved(t, ageMin) {
+    if (!saved[t.id]) return;
+    const now = Date.now();
+    if (reported[t.id] && now - reported[t.id] < 5 * 60000) return;
+    reported[t.id] = now;
+    try {
+      chrome.runtime.sendMessage({ type: 'measure', id: t.id, check: { t: now, ageH: +(ageMin / 60).toFixed(2), views: t.views, likes: t.likes, replies: t.replies, reposts: t.reposts, bookmarks: t.bookmarks } });
+    } catch (e) { /* extension reloaded, page needs refresh */ }
+  }
+
+  function onSave(e) {
+    e.preventDefault(); e.stopPropagation();
+    const art = e.currentTarget.closest('article');
+    const d = art && artCtx.get(art);
+    if (!d) return;
+    const { t, res, ageMin } = d;
+    try {
+      if (saved[t.id]) {
+        chrome.runtime.sendMessage({ type: 'unsave', id: t.id });
+        delete saved[t.id];
+      } else {
+        const p = res.parts || {};
+        const record = {
+          id: t.id, url: `https://x.com/${t.handle}/status/${t.id}`, handle: t.handle, text: t.text, created: t.created,
+          savedAt: Date.now(), ageMinAtSave: +ageMin.toFixed(1),
+          score: res.score, label: res.label, size: p.size, engagement: p.engagement, relative: p.relative, acceleration: p.acceleration,
+          projected: res.projected, vpm: res.vpm, er: res.er,
+          views: t.views, likes: t.likes, replies: t.replies, reposts: t.reposts, bookmarks: t.bookmarks,
+          tau: (cfg && cfg.tau) || XVR.DEFAULTS.tau, followedAuthorSamples: (authors[t.handle] || []).length,
+        };
+        chrome.runtime.sendMessage({ type: 'save', id: t.id, record });
+        saved[t.id] = { id: t.id };
+      }
+    } catch (x) { return; }
+    paint(art, res, t, ageMin);
   }
 
   function fmt(n) { return n == null ? '–' : n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : String(Math.round(n)); }
@@ -117,8 +160,20 @@
     article.classList.add('xvr-host');
     article.classList.toggle('xvr-hot', res.label === 'hot');
     article.classList.toggle('xvr-rising', res.label === 'rising');
-    let b = article.querySelector(':scope > .xvr-badge');
-    if (!b) { b = document.createElement('div'); b.className = 'xvr-badge'; article.appendChild(b); }
+    artCtx.set(article, { t, res, ageMin });
+    let wrap = article.querySelector(':scope > .xvr-wrap');
+    if (!wrap) {
+      wrap = document.createElement('div'); wrap.className = 'xvr-wrap';
+      const sv = document.createElement('button'); sv.className = 'xvr-save'; sv.addEventListener('click', onSave);
+      const nb = document.createElement('div'); nb.className = 'xvr-badge';
+      wrap.append(sv, nb); article.appendChild(wrap);
+    }
+    const b = wrap.querySelector('.xvr-badge');
+    const sv = wrap.querySelector('.xvr-save');
+    const isSaved = !!saved[t.id];
+    sv.textContent = isSaved ? '★' : '☆';
+    sv.classList.toggle('xvr-on', isSaved);
+    sv.title = isSaved ? 'Saved for calibration (click to remove)' : 'Save this post (score + engagement now) for calibration';
     b.dataset.label = res.label;
     if (res.label === 'low-data') { b.textContent = '·'; b.title = 'Not enough views/age to score yet'; return; }
     const icon = res.label === 'hot' ? '🔥 ' : res.label === 'rising' ? '↗ ' : '';
@@ -226,7 +281,8 @@
   let timer = null;
   const debounced = () => { clearTimeout(timer); timer = setTimeout(scan, 800); };
 
-  store.get(['xvr_tweets', 'xvr_authors', 'xvr_settings'], (d) => {
+  store.get(['xvr_tweets', 'xvr_authors', 'xvr_settings', 'xvr_saved'], (d) => {
+    saved = d.xvr_saved || {};
     tweets = d.xvr_tweets || {};
     authors = d.xvr_authors || {};
     cfg = d.xvr_settings || {};
@@ -237,6 +293,7 @@
   });
 
   chrome.storage.onChanged.addListener((ch) => {
+    if (ch.xvr_saved) { saved = ch.xvr_saved.newValue || {}; scan(); }
     if (ch.xvr_settings) { cfg = ch.xvr_settings.newValue || {}; scan(); }
     if (ch.xvr_tweets && !ch.xvr_tweets.newValue) { tweets = {}; authors = {}; }   // cleared from popup
   });

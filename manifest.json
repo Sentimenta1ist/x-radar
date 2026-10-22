@@ -1,16 +1,33 @@
 {
   "manifest_version": 3,
   "name": "X Viral Radar",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Passively scores posts on x.com by early virality: views per minute, engagement per view, growth vs the author's normal. Reads only the page you already see.",
-  "permissions": ["storage"],
-  "action": { "default_popup": "popup.html", "default_title": "X Viral Radar" },
+  "permissions": [
+    "storage",
+    "unlimitedStorage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "X Viral Radar"
+  },
   "content_scripts": [
     {
-      "matches": ["https://x.com/*", "https://twitter.com/*"],
-      "js": ["scoring.js", "content.js"],
-      "css": ["styles.css"],
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "js": [
+        "scoring.js",
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
 }

@@ -52,3 +52,55 @@ $('csv').onclick = () => {
     a.click();
   });
 };
+
+// ---- saved posts: status, re-check, export ----
+const DUE_AFTER_MS = 24 * 3600 * 1000;
+const dueNow = (r, now) => now - r.savedAt >= DUE_AFTER_MS && !(r.checks || []).some((c) => c.t - r.savedAt >= DUE_AFTER_MS);
+
+function refreshSaved() {
+  chrome.storage.local.get(['xvr_saved', 'xvr_recheck_status'], (d) => {
+    const all = Object.values(d.xvr_saved || {});
+    const now = Date.now();
+    const due = all.filter((r) => dueNow(r, now)).length;
+    const checked = all.filter((r) => (r.checks || []).length).length;
+    $('savedInfo').textContent = `${all.length} saved · ${checked} re-checked · ${due} due (24h+)`;
+    $('recheck').disabled = !due;
+    const st = d.xvr_recheck_status;
+    $('recheckInfo').textContent = st ? (st.running ? `re-checking ${st.done + st.failed}/${st.total}…` : `last run: ${st.done} ok, ${st.failed} failed`) : '';
+  });
+}
+refreshSaved();
+chrome.storage.onChanged.addListener(refreshSaved);
+
+$('recheck').onclick = () => {
+  $('recheckInfo').textContent = 'starting… posts open in background tabs one by one (you must be logged in to x.com)';
+  chrome.runtime.sendMessage({ type: 'recheck' });
+};
+
+// One row per check (or one row if never re-checked). views_ratio = views at check / views at save.
+$('savedCsv').onclick = () => {
+  chrome.storage.local.get('xvr_saved', (d) => {
+    const cols = ['id', 'url', 'handle', 'created', 'saved_at', 'age_min_at_save', 'score', 'label', 'size', 'engagement', 'relative', 'acceleration',
+      'projected_at_save', 'vpm_at_save', 'er_at_save', 'views_at_save', 'likes_at_save', 'replies_at_save', 'reposts_at_save', 'bookmarks_at_save', 'tau', 'author_samples',
+      'check_time', 'check_age_h', 'views_check', 'likes_check', 'replies_check', 'reposts_check', 'bookmarks_check', 'views_ratio', 'text'];
+    const q = (v) => (v == null ? '' : /[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : v);
+    const num = (v) => (v == null ? '' : +(+v).toFixed(3));
+    const lines = [cols.join(',')];
+    for (const r of Object.values(d.xvr_saved || {})) {
+      const base = [r.id, r.url, r.handle, new Date(r.created).toISOString(), new Date(r.savedAt).toISOString(), r.ageMinAtSave, r.score, r.label,
+        num(r.size), num(r.engagement), num(r.relative), num(r.acceleration), num(r.projected), num(r.vpm), num(r.er),
+        r.views, r.likes, r.replies, r.reposts, r.bookmarks, r.tau, r.followedAuthorSamples];
+      const checks = (r.checks || []).length ? r.checks : [null];
+      for (const c of checks) {
+        const tail = c
+          ? [new Date(c.t).toISOString(), c.ageH, c.views, c.likes, c.replies, c.reposts, c.bookmarks, r.views ? +(c.views / r.views).toFixed(2) : '']
+          : ['', '', '', '', '', '', '', ''];
+        lines.push([...base, ...tail, r.text].map(q).join(','));
+      }
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
+    a.download = `x-viral-radar-saved-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+  });
+};

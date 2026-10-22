@@ -1,10 +1,16 @@
 article[data-testid="tweet"].xvr-host { position: relative; }
+.xvr-wrap { position: absolute; right: 44px; top: 6px; z-index: 5; display: flex; gap: 4px; align-items: center; }
 .xvr-badge {
-  position: absolute; right: 44px; top: 6px; z-index: 5;
   font: 600 11px/1 -apple-system, system-ui, sans-serif;
   padding: 3px 7px; border-radius: 999px; color: #fff; background: #6b7280;
   cursor: help; user-select: none;
 }
+.xvr-save {
+  font: 13px/1 -apple-system, system-ui, sans-serif; width: 22px; height: 22px; padding: 0;
+  border: 0; border-radius: 999px; background: rgba(83,100,113,.55); color: #fff; cursor: pointer;
+}
+.xvr-save:hover { background: #1d9bf0; }
+.xvr-save.xvr-on { background: #1d9bf0; }
 .xvr-badge[data-label="hot"] { background: #e0245e; }
 .xvr-badge[data-label="rising"] { background: #f59e0b; }
 .xvr-badge[data-label="normal"] { background: #536471; }
