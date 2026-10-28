@@ -1,6 +1,6 @@
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => (n == null ? '–' : n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : String(Math.round(n)));
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 chrome.storage.local.get(['xvr_tweets', 'xvr_settings'], (d) => {
   const tweets = d.xvr_tweets || {};
@@ -17,10 +17,13 @@ chrome.storage.local.get(['xvr_tweets', 'xvr_settings'], (d) => {
   $('count').textContent = `${Object.keys(tweets).length} tracked`;
   if (!rows.length) { $('list').innerHTML = '<div class="empty">Open x.com and scroll your feed. Scored posts seen in the last 3 hours show up here.</div>'; return; }
 
-  $('list').innerHTML = rows.map(([id, t]) => {
+  // Stored values come from the x.com DOM: only digits for ids, known labels for classes
+  const LABELS = new Set(['hot', 'rising', 'normal']);
+  $('list').innerHTML = rows.filter(([id]) => /^\d+$/.test(id)).map(([id, t]) => {
     const ageMin = Math.round((t.seen - t.created) / 60000);
-    return `<div class="row" data-url="https://x.com/${esc(t.handle)}/status/${id}">
-      <div class="top"><span class="pill ${t.label}">${t.score}</span>@${esc(t.handle)}
+    const label = LABELS.has(t.label) ? t.label : 'normal';
+    return `<div class="row" data-url="https://x.com/${encodeURIComponent(t.handle)}/status/${id}">
+      <div class="top"><span class="pill ${label}">${Math.round(+t.score) || 0}</span>@${esc(t.handle)}
         <span class="meta">${fmt(t.views)} views · ~${fmt(t.projected)} proj · ${ageMin} min old</span></div>
       <div class="txt">${esc(t.text || '')}</div></div>`;
   }).join('');
